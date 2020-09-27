@@ -1,0 +1,58 @@
+library(bit64)
+library(twitteR)
+library(tidyr)
+library(dplyr)
+library(bitops)
+library(RCurl)
+library(rjson)
+library(NLP)
+library(tm)
+library(RColorBrewer)
+library(wordcloud)
+library(Rcpp)
+library(knitr)
+library(rtweet)
+#ingresar al https://developer.twitter.com/en/apps/ y crear el token
+consumerKey = ""
+consumerSecret = ""
+accessToken = ""
+accessSecret =""
+options(httr_oauth_cache=TRUE)
+setup_twitter_oauth(consumer_key = consumerKey, consumer_secret = consumerSecret,
+                    access_token = accessToken, access_secret = accessSecret)
+#debe salir este mensaje  "Using direct authentication"
+
+latinape_tweets = userTimeline("Latina_pe", 100)
+bruno_txt = sapply(latinape_tweets, function(x) x$getText())
+
+cleanme = function(x){ 
+  x = tolower(x) 
+  x = gsub("(rt|via)((?:\\b\\W*@\\w+)+)", "", x)  
+  x = gsub("@\\w+", "", x)  
+  x = gsub("(https?:\\/\\/)\\w+(.\\w+)+(.\\w+) ", "", x)  
+  x = gsub("www.\\w+(.*) ", "", x)  
+  x = gsub("(https?:\\/\\/)\\w+(.\\w+)+(.\\w+)", "", x)  
+  x = gsub("www.\\w+(.*)", "", x)  
+  x = gsub("<", "", x) 
+  x = gsub(">", "", x)  
+  x = gsub("[[:punct:]]", "", x) 
+  x = gsub("[[:digit:]]", "", x)  
+  x = gsub("[ |\t]{2,}", "", x)  
+  x = gsub("^ ", "", x) 
+  x = gsub(" $", "", x)  
+  return(x)}
+
+latinape_clean = cleanme(bruno_txt)
+latinape = paste(latinape_clean, collapse=" ")
+all = removeWords(latinape, c(stopwords("spanish"), "Latina_pe"))
+sw <- readLines(file.choose(),F, encoding="UTF-8")
+sw = iconv(sw, to="ASCII//TRANSLIT")
+all = removeWords(all,sw)
+
+corpus = Corpus(VectorSource(all))
+tdm = TermDocumentMatrix(corpus)
+m= as.matrix(tdm)
+colnames(m) = c("@Latina_pe")
+comparison.cloud(m, random.order=FALSE,colors=c("#FF0099","red","#00B2FF","#6600CC"),title.size=0.8,max.words=1000)
+commonality.cloud(m,random.order=FALSE,colors = brewer.pal(8, "Accent"),title.size=1.5,max.words=500)
+
