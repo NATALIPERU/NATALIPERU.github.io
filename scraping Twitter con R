@@ -1,0 +1,31 @@
+library(bit64)
+library(twitteR)
+library(tidyr)
+library(dplyr)
+library(bitops)
+library(RCurl)
+library(rjson)
+library(NLP)
+library(tm)
+library(RColorBrewer)
+library(wordcloud)
+library(Rcpp)
+library(knitr)
+library(rtweet)
+#ingresar al https://developer.twitter.com/en/apps/ y crear el token
+consumerKey = ""
+consumerSecret = ""
+accessToken = ""
+accessSecret =""
+options(httr_oauth_cache=TRUE)
+setup_twitter_oauth(consumer_key = consumerKey, consumer_secret = consumerSecret,
+                    access_token = accessToken, access_secret = accessSecret)
+#debe salir este mensaje  "Using direct authentication"
+
+#colocar el hashtag, la cantidad de tweet que necesitas y el rango de fecha de la consulta:
+Consulta = searchTwitter("#larepublica",n=100, geo=NULL, since="2020-09-20", until="2020-09-27")
+#guardar los datos en un data.frame
+Datos_Tweets = twListToDF(Consulta)
+#ahora guardarlo como archivo
+write.csv(Datos_Tweets, file = "Datos_Tweets.csv")
+#Listo!
