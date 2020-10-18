@@ -340,4 +340,36 @@ bancos_todo['texto'] = bancos_todo['texto'].apply(lambda x: remove_stopwords(x))
 
 from google.colab import files
 bancos_todo.to_csv('bancos_todo.csv',encoding='utf-8-sig',index = False) 
-files.download('bancos_todo.csv')
+files.download('bancos_todo.csv')  
+
+#analisis de sentimiento AWS en lambda
+import boto3
+import json
+
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')
+    bucket = 'dsw1'
+    key = 'Bcp_id_todo_3.csv'
+    file = s3.get_object(Bucket = bucket, Key = key)
+    ##paragraph = str(file['Body'].read())
+    lines = file['Body'].read().splitlines()
+    comprehend = boto3.client('comprehend')
+    
+
+    responses = []
+
+    for line in lines:
+        response = comprehend.detect_sentiment(Text=str(line),LanguageCode = 'es')
+        response.update({"text" : str(line)})
+        responses.append(response)
+        
+
+    s3 = boto3.resource('s3')
+    object = s3.Object(bucket,'Output/obj.json')
+    
+    object.put(Body=(bytes(json.dumps(responses,indent=4,  ensure_ascii= False).encode('utf-8'))))
+    
+    return responses
+    
+
+    ##return response
